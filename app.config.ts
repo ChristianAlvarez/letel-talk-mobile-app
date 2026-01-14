@@ -2,14 +2,14 @@ import { ExpoConfig, ConfigContext } from 'expo/config';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   return {
-    name: 'Chatwoot',
-    slug: process.env.EXPO_PUBLIC_APP_SLUG || 'chatwoot-mobile',
+    name: 'Talk Letel',
+    slug: process.env.EXPO_PUBLIC_APP_SLUG || 'letel-talk-mobile',
     version: '4.3.12',
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
     newArchEnabled: false,
-    scheme: 'chatwootapp',
+    scheme: 'talkletelapp',
     splash: {
       image: './assets/splash.png',
       resizeMode: 'contain',
@@ -31,16 +31,16 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         ITSAppUsesNonExemptEncryption: false,
       },
       // Please use the relative path to the google-services.json file
-      googleServicesFile: process.env.EXPO_PUBLIC_IOS_GOOGLE_SERVICES_FILE,
+      googleServicesFile: process.env.EXPO_PUBLIC_IOS_GOOGLE_SERVICES_FILE || undefined,
       entitlements: { 'aps-environment': 'production' },
-      associatedDomains: ['applinks:app.chatwoot.com'],
+      associatedDomains: ['applinks:talk.letel.cl'],
     },
     android: {
       adaptiveIcon: { foregroundImage: './assets/adaptive-icon.png', backgroundColor: '#ffffff' },
       package: 'com.chatwoot.app',
       permissions: ['android.permission.CAMERA', 'android.permission.RECORD_AUDIO'],
       // Please use the relative path to the google-services.json file
-      googleServicesFile: process.env.EXPO_PUBLIC_ANDROID_GOOGLE_SERVICES_FILE,
+      googleServicesFile: process.env.EXPO_PUBLIC_ANDROID_GOOGLE_SERVICES_FILE || (process.env.EAS_BUILD_PROFILE === 'development' ? undefined : './android/app/google-services.json'),
       intentFilters: [
         {
           action: 'VIEW',
@@ -48,7 +48,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           data: [
             {
               scheme: 'https',
-              host: 'app.chatwoot.com',
+              host: 'talk.letel.cl',
               pathPrefix: '/app/accounts/',
               pathPattern: '/*/conversations/*',
             },
@@ -59,7 +59,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           action: 'VIEW',
           data: [
             {
-              scheme: 'chatwootapp',
+              scheme: 'talkletelapp',
             },
           ],
           category: ['BROWSABLE', 'DEFAULT'],
@@ -68,11 +68,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     extra: {
       eas: {
-        projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
+        projectId: process.env.EXPO_PUBLIC_PROJECT_ID || 'dfb18482-1715-4085-bdca-8bfda855f061',
         storybookEnabled: process.env.EXPO_STORYBOOK_ENABLED,
       },
     },
-    owner: 'chatwoot',
+    // owner: 'chatwoot', // Comentado para permitir crear un nuevo proyecto EAS con tu cuenta
     plugins: [
       'expo-font',
       ['react-native-permissions', { iosPermissions: ['Camera', 'PhotoLibrary', 'MediaLibrary'] }],
@@ -84,8 +84,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           organization: process.env.EXPO_PUBLIC_SENTRY_ORG_NAME,
         },
       ],
-      '@react-native-firebase/app',
-      '@react-native-firebase/messaging',
+      // Firebase plugins - comentados temporalmente para development builds
+      // Descomentar cuando tengas un google-services.json válido
+      // '@react-native-firebase/app',
+      // '@react-native-firebase/messaging',
       [
         'expo-build-properties',
         {

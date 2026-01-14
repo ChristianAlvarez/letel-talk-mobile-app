@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import * as Sentry from '@sentry/react-native';
 
-import messaging from '@react-native-firebase/messaging';
+import { getMessaging } from '@/utils/firebaseMessaging';
 import { Platform, PermissionsAndroid } from 'react-native';
 import {
   getSystemName,
@@ -89,44 +89,53 @@ export const settingsActions = {
     'settings/saveDeviceDetails',
     async (_, { rejectWithValue }) => {
       try {
-        const permissionEnabled = await messaging().hasPermission();
-        const deviceId = await getUniqueId();
-        const devicePlatform = getSystemName();
-        const manufacturer = await getManufacturer();
-        const model = await getModel();
-        const apiLevel = await getApiLevel();
-        const deviceName = `${manufacturer} ${model}`;
+        const messaging = getMessaging();
+        let fcmToken = '';
 
-        const isAndroidAPILevelGreater32 = apiLevel > 32 && Platform.OS === 'android';
-        const brandName = await getBrand();
-        const buildNumber = await getBuildNumber();
+        try {
+          const permissionEnabled = await messaging.hasPermission();
+          const deviceId = await getUniqueId();
+          const devicePlatform = getSystemName();
+          const manufacturer = await getManufacturer();
+          const model = await getModel();
+          const apiLevel = await getApiLevel();
+          const deviceName = `${manufacturer} ${model}`;
 
-        if (!permissionEnabled || permissionEnabled === -1) {
-          if (isAndroidAPILevelGreater32) {
-            await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+          const isAndroidAPILevelGreater32 = apiLevel > 32 && Platform.OS === 'android';
+          const brandName = await getBrand();
+          const buildNumber = await getBuildNumber();
+
+          if (!permissionEnabled || permissionEnabled === -1) {
+            if (isAndroidAPILevelGreater32) {
+              await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+            }
+            await messaging.requestPermission();
           }
-          await messaging().requestPermission();
+
+          const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+          // https://github.com/invertase/react-native-firebase/issues/6893#issuecomment-1427998691
+          // await messaging().registerDeviceForRemoteMessages();
+          await sleep(1000);
+          fcmToken = await messaging.getToken();
+
+          const pushData: PushPayload = {
+            subscription_type: 'fcm',
+            subscription_attributes: {
+              deviceName,
+              devicePlatform,
+              apiLevel: apiLevel.toString(),
+              brandName,
+              buildNumber,
+              push_token: fcmToken,
+              device_id: deviceId,
+            },
+          };
+          await SettingsService.saveDeviceDetails(pushData);
+        } catch (firebaseError) {
+          console.warn('Firebase not available, skipping device registration:', firebaseError);
+          // Continuar sin Firebase - la app funcionará sin notificaciones push
         }
 
-        const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-        // https://github.com/invertase/react-native-firebase/issues/6893#issuecomment-1427998691
-        // await messaging().registerDeviceForRemoteMessages();
-        await sleep(1000);
-        const fcmToken = await messaging().getToken();
-
-        const pushData: PushPayload = {
-          subscription_type: 'fcm',
-          subscription_attributes: {
-            deviceName,
-            devicePlatform,
-            apiLevel: apiLevel.toString(),
-            brandName,
-            buildNumber,
-            push_token: fcmToken,
-            device_id: deviceId,
-          },
-        };
-        await SettingsService.saveDeviceDetails(pushData);
         return { fcmToken };
       } catch (error) {
         Sentry.captureException(error);

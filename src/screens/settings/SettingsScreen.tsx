@@ -315,13 +315,6 @@ const SettingsScreen = () => {
             handlePress={onClickLogout}
           />
         </Animated.View>
-        <Pressable
-          style={tailwind.style('p-4 items-center')}
-          onLongPress={() => debugActionsSheetRef.current?.present()}>
-          <Text style={tailwind.style('text-sm text-gray-700 ')}>
-            {`${chatwootInstance} ${appVersionDetails}`}
-          </Text>
-        </Pressable>
       </Animated.ScrollView>
       <BottomSheetModal
         ref={userAvailabilityStatusSheetRef}

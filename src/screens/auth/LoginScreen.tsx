@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EMAIL_REGEX } from '@/constants';
-import { EyeIcon, EyeSlash, LockIcon } from '@/svg-icons';
+import { EyeIcon, EyeSlash } from '@/svg-icons';
 import { tailwind } from '@/theme';
 import i18n from '@/i18n';
 import { resetAuth } from '@/store/auth/authSlice';
@@ -23,17 +23,14 @@ import {
   LanguageList,
   Button,
   Icon,
-  AuthButton,
 } from '@/components-next';
 import {
-  selectInstallationUrl,
   selectBaseUrl,
   selectLocale,
 } from '@/store/settings/settingsSelectors';
 import { selectIsLoggingIn } from '@/store/auth/authSelectors';
 import { setLocale } from '@/store/settings/settingsSlice';
 import { useRefsContext } from '@/context/RefsContext';
-import { SsoUtils } from '@/utils/ssoUtils';
 
 type FormData = {
   email: string;
@@ -65,7 +62,6 @@ const LoginScreen = () => {
   const dispatch = useAppDispatch();
   const isLoggingIn = useAppSelector(selectIsLoggingIn);
 
-  const installationUrl = useAppSelector(selectInstallationUrl);
   const baseUrl = useAppSelector(selectBaseUrl);
   const activeLocale = useAppSelector(selectLocale);
 
@@ -78,10 +74,7 @@ const LoginScreen = () => {
 
   useEffect(() => {
     dispatch(resetAuth());
-    if (!installationUrl) {
-      navigation.navigate('ConfigureURL' as never);
-    }
-  }, [installationUrl, navigation, dispatch]);
+  }, [dispatch]);
 
   const onSubmit = async (data: FormData) => {
     const { email, password } = data;
@@ -103,38 +96,12 @@ const LoginScreen = () => {
     }
   };
 
-  // TODO: Change this condition based on EE check
-  // Show SSO login button only if installation URL contains app.chatwoot.com
-  const showSsoLogin = installationUrl.includes('app.chatwoot.com');
-
   const openResetPassword = () => {
     navigation.navigate('ResetPassword' as never);
   };
 
-  const openConfigInstallationURL = () => {
-    navigation.navigate('ConfigureURL' as never);
-  };
-
   const onChangeLanguage = (locale: string) => {
     dispatch(setLocale(locale));
-  };
-
-  const handleSsoLogin = async () => {
-    if (!installationUrl) {
-      return;
-    }
-
-    try {
-      const result = await SsoUtils.loginWithSSO(installationUrl);
-
-      if (result.type === 'success' && result.url) {
-        const ssoParams = SsoUtils.parseCallbackUrl(result.url);
-        await SsoUtils.handleSsoCallback(ssoParams, dispatch);
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      // SSO login error handled silently
-    }
   };
 
   return (
@@ -148,13 +115,15 @@ const LoginScreen = () => {
         <Animated.ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={tailwind.style('px-6 pt-24')}>
-          <Image
-            // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-            source={require('@/assets/images/logo.png')}
-            style={tailwind.style('w-10 h-10')}
-            resizeMode="contain"
-          />
-          <View style={tailwind.style('pt-6 gap-4')}>
+          <View style={tailwind.style('items-center -mb-8')}>
+            <Image
+              // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+              source={require('@/assets/images/logo.png')}
+              style={tailwind.style('w-76 h-76')}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={tailwind.style('-mt-8 gap-4')}>
             <Animated.Text style={tailwind.style('text-2xl text-gray-950 font-inter-semibold-20')}>
               {i18n.t('LOGIN.TITLE')}
             </Animated.Text>
@@ -165,27 +134,6 @@ const LoginScreen = () => {
               {i18n.t('LOGIN.DESCRIPTION', { baseUrl })}
             </Animated.Text>
           </View>
-
-          {showSsoLogin && (
-            <View>
-              <AuthButton
-                text={i18n.t('LOGIN.LOGIN_VIA_SSO')}
-                icon={<LockIcon />}
-                handlePress={handleSsoLogin}
-                disabled={isLoggingIn}
-                variant="outline"
-                style={tailwind.style('mt-8')}
-              />
-
-              <View style={tailwind.style('flex-row items-center my-6')}>
-                <View style={tailwind.style('flex-1 h-px bg-gray-300')} />
-                <Animated.Text style={tailwind.style('px-4 text-sm text-gray-600')}>
-                  OR
-                </Animated.Text>
-                <View style={tailwind.style('flex-1 h-px bg-gray-300')} />
-              </View>
-            </View>
-          )}
 
           <Controller
             control={control}
@@ -282,13 +230,6 @@ const LoginScreen = () => {
             handlePress={handleSubmit(onSubmit)}
           />
 
-          <Pressable
-            style={tailwind.style('flex-row justify-center items-center mt-6')}
-            onPress={openConfigInstallationURL}>
-            <Animated.Text style={tailwind.style('text-sm text-gray-900')}>
-              {i18n.t('LOGIN.CHANGE_URL')}
-            </Animated.Text>
-          </Pressable>
           <Pressable
             style={tailwind.style('flex-row justify-center items-center mt-4')}
             onPress={() => languagesModalSheetRef.current?.present()}>

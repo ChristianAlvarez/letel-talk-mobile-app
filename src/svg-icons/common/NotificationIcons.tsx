@@ -35,9 +35,11 @@ export const NotificationNewMessageIcon = () => {
     <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
       <Rect width="20" height="20" rx="10" fill="#2781F6" />
       <Path
-        d="M15 15H9.9996C7.24319 15 5 12.7567 5 9.99955C5 7.24335 7.24319 5 9.99965 5C12.7568 5 15 7.24335 15 9.99955V15Z"
+        d="M5 7C5 5.89543 5.89543 5 7 5H13C14.1046 5 15 5.89543 15 7V11C15 12.1046 14.1046 13 13 13H9L5 15V7Z"
         stroke="white"
         strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </Svg>
   );
